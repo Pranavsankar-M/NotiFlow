@@ -56,9 +56,11 @@ jobs:
           PLAT="platforms;android-${{ steps.detect.outputs.compile_sdk }}"
           BT="build-tools;34.0.0"
           echo "Installing $PLAT and $BT"
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "$PLAT" "$BT" "cmdline-tools;latest"
-        env:
-          ANDROID_SDK_ROOT: /opt/android-sdk
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
+            "platform-tools" \
+            "$PLAT" \
+            "$BT" \
+            "cmdline-tools;latest"
 
       - name: Add SDK to PATH
         run: |
@@ -66,10 +68,10 @@ jobs:
           echo "/opt/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "/opt/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
-      - name: Build (gradle assembleDebug) and capture output
+      - name: Build (gradle :app:assembleDebug) and capture output
         run: |
           set -o pipefail
-          gradle assembleDebug --stacktrace 2>&1 | tee build.log
+          gradle :app:assembleDebug --stacktrace 2>&1 | tee build.log
           test ${PIPESTATUS[0]} -eq 0
         continue-on-error: false
 
