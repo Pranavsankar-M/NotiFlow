@@ -1,10 +1,9 @@
-name: Build Debug APK
+name: Build Debug APK (with logs)
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch: {}
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -13,7 +12,7 @@ jobs:
       ANDROID_SDK_ROOT: /opt/android-sdk
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup JDK 17
@@ -22,32 +21,66 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Install system packages (wget, unzip, gradle)
+      - name: Install common tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y unzip wget curl gradle
+          sudo apt-get install -y wget unzip curl git gradle
 
-      - name: Download Android command-line tools
+      - name: Download Android cmdline tools
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline.zip
           unzip -q cmdline.zip -d cmdline
-          mv cmdline/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
+          mv cmdline/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ || true
           rm -rf cmdline cmdline.zip
 
-      - name: Install Android SDK packages
+      - name: Detect compileSdkVersion (fallback 34)
+        id: detect
         run: |
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
-            "platform-tools" \
-            "build-tools;34.0.0" \
-            "platforms;android-34" \
-            "cmdline-tools;latest"
+          COMPILE_SDK=34
+          if [ -f app/build.gradle ]; then
+            v=$(grep -Eo 'compileSdkVersion[[:space:]]+[0-9]+' app/build.gradle | head -1 | grep -Eo '[0-9]+' || true)
+            if [ -n "$v" ]; then COMPILE_SDK=$v; fi
+          fi
+          if [ -f app/build.gradle.kts ]; then
+            v=$(grep -Eo 'compileSdk[[:space:]]*=[[:space:]]*[0-9]+' app/build.gradle.kts | head -1 | grep -Eo '[0-9]+' || true)
+            if [ -n "$v" ]; then COMPILE_SDK=$v; fi
+          fi
+          echo "compile_sdk=${COMPILE_SDK}" >> $GITHUB_OUTPUT
+          echo "Detected compileSdkVersion=$COMPILE_SDK"
 
-      - name: Build debug APK (using system Gradle, not ./gradlew)
-        run: gradle assembleDebug
+      - name: Install Android SDK platform and build-tools
+        run: |
+          PLAT="platforms;android-${{ steps.detect.outputs.compile_sdk }}"
+          BT="build-tools;34.0.0"
+          echo "Installing $PLAT and $BT"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "$PLAT" "$BT" "cmdline-tools;latest"
+        env:
+          ANDROID_SDK_ROOT: /opt/android-sdk
 
-      - name: Upload APK artifact
+      - name: Add SDK to PATH
+        run: |
+          echo "ANDROID_SDK_ROOT=/opt/android-sdk" >> $GITHUB_ENV
+          echo "/opt/android-sdk/platform-tools" >> $GITHUB_PATH
+          echo "/opt/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+      - name: Build (gradle assembleDebug) and capture output
+        run: |
+          set -o pipefail
+          gradle assembleDebug --stacktrace 2>&1 | tee build.log
+          test ${PIPESTATUS[0]} -eq 0
+        continue-on-error: false
+
+      - name: Upload build log
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+
+      - name: Upload APK artifact (if exists)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
