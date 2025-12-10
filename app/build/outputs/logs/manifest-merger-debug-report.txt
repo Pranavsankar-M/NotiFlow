@@ -45,7 +45,6 @@ MERGED from [androidx.documentfile:documentfile:1.0.0] /root/.gradle/caches/tran
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /root/.gradle/caches/transforms-3/0c46034affcabee24977766a803f1187/transformed/localbroadcastmanager-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.print:print:1.0.0] /root/.gradle/caches/transforms-3/bbb76be38c6e788f3d6e99953f3940ec/transformed/print-1.0.0/AndroidManifest.xml:17:1-22:12
 	package
-		ADDED from /workspaces/NotiFlow/app/src/main/AndroidManifest.xml:1:11-33
 		INJECTED from /workspaces/NotiFlow/app/src/main/AndroidManifest.xml
 	android:versionName
 		INJECTED from /workspaces/NotiFlow/app/src/main/AndroidManifest.xml
