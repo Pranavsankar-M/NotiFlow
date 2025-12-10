@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: /opt/android-sdk
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -19,31 +22,30 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Install system packages (wget, unzip, gradle)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip wget curl gradle
+
       - name: Download Android command-line tools
         run: |
-          mkdir -p /opt/android-sdk/cmdline-tools
-          cd /opt/android-sdk
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline.zip
-          unzip -q cmdline.zip -d /opt/android-sdk/cmdline-tools
-          mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest || true
+          unzip -q cmdline.zip -d cmdline
+          mv cmdline/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+          rm -rf cmdline cmdline.zip
 
       - name: Install Android SDK packages
-        env:
-          ANDROID_SDK_ROOT: /opt/android-sdk
         run: |
-          yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmdline-tools;latest"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
+            "platform-tools" \
+            "build-tools;34.0.0" \
+            "platforms;android-34" \
+            "cmdline-tools;latest"
 
-      - name: Add SDK tools to PATH
-        run: |
-          echo "ANDROID_SDK_ROOT=/opt/android-sdk" >> $GITHUB_ENV
-          echo "/opt/android-sdk/platform-tools" >> $GITHUB_PATH
-          echo "/opt/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew || true
-
-      - name: Build debug APK
-        run: ./gradlew assembleDebug -Pandroid.debug.obsoleteApiUsage=true
+      - name: Build debug APK (using system Gradle, not ./gradlew)
+        run: gradle assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
