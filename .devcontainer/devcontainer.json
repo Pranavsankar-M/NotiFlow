@@ -1,0 +1,20 @@
+{
+  "name": "NotifCRM Android Devcontainer",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "settings": {
+    "editor.formatOnSave": true,
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "extensions": [
+    "vscjava.vscode-java-pack",
+    "redhat.java",
+    "vscjava.vscode-gradle",
+    "ms-azuretools.vscode-docker",
+    "mhutchie.git-graph"
+  ],
+  "remoteUser": "root",
+  "postCreateCommand": "chmod +x ./gradlew || true"
+}
