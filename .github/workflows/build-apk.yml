@@ -1,4 +1,4 @@
-name: Build Debug APK (with logs)
+name: Build Debug APK
 
 on:
   push:
@@ -8,8 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      ANDROID_SDK_ROOT: /opt/android-sdk
 
     steps:
       - name: Checkout repository
@@ -20,62 +18,16 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          cache: gradle
 
-      - name: Install common tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget unzip curl git
-
-      - name: Download Android cmdline tools
-        run: |
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-          cd $ANDROID_SDK_ROOT
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline.zip
-          unzip -q cmdline.zip -d cmdline
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
-          mv cmdline/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ || true
-          rm -rf cmdline cmdline.zip
-
-      - name: Detect compileSdkVersion (fallback 34)
-        id: detect
-        run: |
-          COMPILE_SDK=34
-          if [ -f app/build.gradle ]; then
-            v=$(grep -Eo 'compileSdk[[:space:]]*[0-9]+' app/build.gradle | grep -Eo '[0-9]+' | head -1 || true)
-            if [ -n "$v" ]; then COMPILE_SDK=$v; fi
-          fi
-          if [ -f app/build.gradle.kts ]; then
-            v=$(grep -Eo 'compileSdk[[:space:]]*=[[:space:]]*[0-9]+' app/build.gradle.kts | grep -Eo '[0-9]+' | head -1 || true)
-            if [ -n "$v" ]; then COMPILE_SDK=$v; fi
-          fi
-          echo "compile_sdk=${COMPILE_SDK}" >> $GITHUB_OUTPUT
-          echo "Detected compileSdk=$COMPILE_SDK"
-
-      - name: Install Android SDK platform and build-tools
-        run: |
-          COMPILE_SDK=${{ steps.detect.outputs.compile_sdk }}
-          PLAT="platforms;android-${COMPILE_SDK}"
-          BT="build-tools;34.0.0"
-          echo "Installing $PLAT and $BT"
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
-            "platform-tools" \
-            "$PLAT" \
-            "$BT" \
-            "cmdline-tools;latest" || true
-
-      - name: Add SDK to PATH
-        run: |
-          echo "ANDROID_SDK_ROOT=/opt/android-sdk" >> $GITHUB_ENV
-          echo "/opt/android-sdk/platform-tools" >> $GITHUB_PATH
-          echo "/opt/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Make Gradle wrapper executable
-        run: |
-          if [ -f ./gradlew ]; then chmod +x ./gradlew; fi
+        run: chmod +x ./gradlew
 
-      - name: Build (gradle :app:assembleDebug)
-        run: |
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+      - name: Build Debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Check for APK
         id: check_apk
@@ -88,7 +40,7 @@ jobs:
             echo "APK not found!"
           fi
 
-      - name: Upload APK artifact (if exists)
+      - name: Upload APK artifact
         if: steps.check_apk.outputs.found == 'true'
         uses: actions/upload-artifact@v4
         with:
