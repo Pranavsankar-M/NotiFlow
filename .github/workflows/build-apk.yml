@@ -41,26 +41,27 @@ jobs:
         run: |
           COMPILE_SDK=34
           if [ -f app/build.gradle ]; then
-            v=$(grep -Eo 'compileSdkVersion[[:space:]]+[0-9]+' app/build.gradle | head -1 | grep -Eo '[0-9]+' || true)
+            v=$(grep -Eo 'compileSdk[[:space:]]*[0-9]+' app/build.gradle | grep -Eo '[0-9]+' | head -1 || true)
             if [ -n "$v" ]; then COMPILE_SDK=$v; fi
           fi
           if [ -f app/build.gradle.kts ]; then
-            v=$(grep -Eo 'compileSdk[[:space:]]*=[[:space:]]*[0-9]+' app/build.gradle.kts | head -1 | grep -Eo '[0-9]+' || true)
+            v=$(grep -Eo 'compileSdk[[:space:]]*=[[:space:]]*[0-9]+' app/build.gradle.kts | grep -Eo '[0-9]+' | head -1 || true)
             if [ -n "$v" ]; then COMPILE_SDK=$v; fi
           fi
           echo "compile_sdk=${COMPILE_SDK}" >> $GITHUB_OUTPUT
-          echo "Detected compileSdkVersion=$COMPILE_SDK"
+          echo "Detected compileSdk=$COMPILE_SDK"
 
       - name: Install Android SDK platform and build-tools
         run: |
-          PLAT="platforms;android-${{ steps.detect.outputs.compile_sdk }}"
+          COMPILE_SDK=${{ steps.detect.outputs.compile_sdk }}
+          PLAT="platforms;android-${COMPILE_SDK}"
           BT="build-tools;34.0.0"
           echo "Installing $PLAT and $BT"
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
             "platform-tools" \
             "$PLAT" \
             "$BT" \
-            "cmdline-tools;latest"
+            "cmdline-tools;latest" || true
 
       - name: Add SDK to PATH
         run: |
@@ -72,26 +73,19 @@ jobs:
         run: |
           if [ -f ./gradlew ]; then chmod +x ./gradlew; fi
 
-      - name: Build (gradle :app:assembleDebug) and capture output
+      - name: Build (gradle :app:assembleDebug)
         run: |
-          set -o pipefail
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
-          test ${PIPESTATUS[0]} -eq 0
-        continue-on-error: false
-
-      - name: Upload build log
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Check for APK
         id: check_apk
         run: |
           if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
             echo "found=true" >> $GITHUB_OUTPUT
+            ls -lh app/build/outputs/apk/debug/app-debug.apk
           else
             echo "found=false" >> $GITHUB_OUTPUT
+            echo "APK not found!"
           fi
 
       - name: Upload APK artifact (if exists)
