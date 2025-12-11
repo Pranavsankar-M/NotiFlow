@@ -1,6 +1,22 @@
 [
     {
-        "merged": "com.notiflow.app-merged_res-28:/layout_activity_main.xml.flat",
-        "source": "com.notiflow.app-main-30:/layout/activity_main.xml"
+        "merged": "com.notiflow.app-merged_res-31:/drawable_rounded_bg.xml.flat",
+        "source": "com.notiflow.app-main-33:/drawable/rounded_bg.xml"
+    },
+    {
+        "merged": "com.notiflow.app-merged_res-31:/drawable_card_bg.xml.flat",
+        "source": "com.notiflow.app-main-33:/drawable/card_bg.xml"
+    },
+    {
+        "merged": "com.notiflow.app-merged_res-31:/layout_activity_main.xml.flat",
+        "source": "com.notiflow.app-main-33:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.notiflow.app-merged_res-31:/drawable_icon_bg.xml.flat",
+        "source": "com.notiflow.app-main-33:/drawable/icon_bg.xml"
+    },
+    {
+        "merged": "com.notiflow.app-merged_res-31:/drawable_badge_bg.xml.flat",
+        "source": "com.notiflow.app-main-33:/drawable/badge_bg.xml"
     }
 ]

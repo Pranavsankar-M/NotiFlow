@@ -24,7 +24,7 @@ jobs:
       - name: Install common tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip curl git gradle
+          sudo apt-get install -y wget unzip curl git
 
       - name: Download Android cmdline tools
         run: |
@@ -68,10 +68,14 @@ jobs:
           echo "/opt/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "/opt/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
+      - name: Make Gradle wrapper executable
+        run: |
+          if [ -f ./gradlew ]; then chmod +x ./gradlew; fi
+
       - name: Build (gradle :app:assembleDebug) and capture output
         run: |
           set -o pipefail
-          gradle :app:assembleDebug --stacktrace 2>&1 | tee build.log
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
           test ${PIPESTATUS[0]} -eq 0
         continue-on-error: false
 
@@ -81,8 +85,17 @@ jobs:
           name: build-log
           path: build.log
 
+      - name: Check for APK
+        id: check_apk
+        run: |
+          if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload APK artifact (if exists)
-        if: always()
+        if: steps.check_apk.outputs.found == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk

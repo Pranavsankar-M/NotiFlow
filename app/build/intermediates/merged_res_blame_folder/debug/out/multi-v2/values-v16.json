@@ -1,20 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.notiflow.app-mergeDebugResources-26:/values-v16/values-v16.xml",
+            "outputFile": "com.notiflow.app-mergeDebugResources-29:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "/root/.gradle/caches/transforms-3/74b5f8503e11a2f63a69052fcd07d4b9/transformed/core-1.10.1/res/values-v16/values-v16.xml",
-                    "from": {
-                        "startLines": "2",
-                        "startColumns": "4",
-                        "startOffsets": "55",
-                        "endColumns": "65",
-                        "endOffsets": "116"
-                    }
-                },
-                {
-                    "source": "/root/.gradle/caches/transforms-3/585a44f69049fefd739e726b71b92dd3/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
+                    "source": "/root/.gradle/caches/transforms-3/1abe9e278965eb08b6e228db9acf8d4d/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -30,6 +20,16 @@
                         "endLines": "6",
                         "endColumns": "12",
                         "endOffsets": "289"
+                    }
+                },
+                {
+                    "source": "/root/.gradle/caches/transforms-3/0d5fa1cc28f26a206a86db3ac8b3ea5d/transformed/core-1.10.1/res/values-v16/values-v16.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "65",
+                        "endOffsets": "116"
                     }
                 }
             ]
